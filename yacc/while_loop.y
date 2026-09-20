@@ -33,7 +33,7 @@ int yylex(void)
         c = getchar();
     } while (c == ' ' || c == '\t');
 
-    if (c == EOF)
+    if (c == '\n' || c == EOF)
         return 0;
 
     if (isalpha(c)) {
@@ -57,15 +57,15 @@ int yylex(void)
     }
 
     if (isdigit(c)) {
-          do {
-              c = getchar();
-          } while (isdigit(c));
+        do {
+            c = getchar();
+        } while (isdigit(c));
 
-          if (c != EOF)
-              ungetc(c, stdin);
+        if (c != EOF)
+            ungetc(c, stdin);
 
-          return NUMBER;
-      }
+        return NUMBER;
+    }
 
     if (c == '<')
         return LT;
