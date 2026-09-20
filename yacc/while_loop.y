@@ -31,7 +31,7 @@ int yylex(void)
 
     do {
         c = getchar();
-    } while (c == ' ' || c == '\t' || c == '\n');
+    } while (c == ' ' || c == '\t');
 
     if (c == EOF)
         return 0;
