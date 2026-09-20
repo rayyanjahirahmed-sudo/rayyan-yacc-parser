@@ -57,10 +57,15 @@ int yylex(void)
     }
 
     if (isdigit(c)) {
-        while (isdigit(getchar()))
-            ;
-        return NUMBER;
-    }
+          do {
+              c = getchar();
+          } while (isdigit(c));
+
+          if (c != EOF)
+              ungetc(c, stdin);
+
+          return NUMBER;
+      }
 
     if (c == '<')
         return LT;
