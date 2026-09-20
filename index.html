@@ -13,11 +13,8 @@
         Enter a while-loop to check whether it follows the defined grammar.
     </p>
 
-    <input
-        type="text"
-        id="input"
-        placeholder="Example: while (x < 10) x = x + 1;"
-    >
+    <input type="text" id="input"
+           placeholder="while (x < 10) x = x + 1;">
 
     <button onclick="parseInput()">Parse</button>
 
@@ -28,15 +25,15 @@
     <script>
         function parseInput() {
             let input = document.getElementById("input").value.trim();
-            let result = document.getElementById("result");
 
-            let pattern =
-                /^while\s*\(\s*[a-zA-Z][a-zA-Z0-9]*\s*<\s*[0-9]+\s*\)\s*[a-zA-Z][a-zA-Z0-9]*\s*=\s*[a-zA-Z][a-zA-Z0-9]*\s*\+\s*[0-9]+\s*;$/;
+            let pattern = /^while\s*\(\s*[a-zA-Z][a-zA-Z0-9]*\s*<\s*[0-9]+\s*\)\s*[a-zA-Z][a-zA-Z0-9]*\s*=\s*[a-zA-Z][a-zA-Z0-9]*\s*\+\s*[0-9]+\s*;$/;
 
             if (pattern.test(input)) {
-                result.textContent = "Valid while-loop";
+                document.getElementById("result").textContent =
+                    "Valid while-loop";
             } else {
-                result.textContent = "Invalid while-loop";
+                document.getElementById("result").textContent =
+                    "Invalid while-loop";
             }
         }
     </script>
