@@ -1,545 +1,422 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YACC Parser Visualizer</title>
 
-    <title>YACC Parser</title>
+<style>
+* {
+    box-sizing: border-box;
+}
 
-    <style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+}
 
-        * {
-            box-sizing: border-box;
-        }
+header {
+    text-align: center;
+    padding: 28px;
+    background: #111827;
+    border-bottom: 1px solid #334155;
+}
 
-        body {
-            margin: 0;
-            padding: 40px 20px;
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            color: #222;
-        }
+header h1 {
+    margin: 0 0 8px;
+}
 
-        .container {
-            max-width: 1000px;
-            margin: auto;
-        }
+header p {
+    margin: 0;
+    color: #94a3b8;
+}
 
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+.mode-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+}
 
-        header h1 {
-            margin-bottom: 5px;
-        }
+.mode-buttons button {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: 1px solid #475569;
+    background: #1e293b;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
 
-        header p {
-            color: #666;
-        }
+.mode-buttons button.active {
+    background: #2563eb;
+    border-color: #2563eb;
+}
 
-        /* MODE BUTTONS */
+.container {
+    width: min(1100px, 92%);
+    margin: auto;
+    padding-bottom: 40px;
+}
 
-        .parser-selector {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
+.parser {
+    display: none;
+}
 
-        .selector {
-            padding: 12px 22px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            background: white;
-            color: #222;
-            font-size: 15px;
-            cursor: pointer;
-        }
+.parser.active {
+    display: block;
+}
 
-        .selector:hover {
-            background: #eee;
-        }
+.card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
 
-        .selector.active {
-            background: #222;
-            color: white;
-            border-color: #222;
-        }
+.description {
+    color: #94a3b8;
+    line-height: 1.6;
+}
 
-        /* SECTIONS */
+textarea {
+    width: 100%;
+    min-height: 130px;
+    resize: vertical;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #475569;
+    background: #0f172a;
+    color: white;
+    font-family: Consolas, monospace;
+    font-size: 16px;
+}
 
-        .parser-section {
-            display: block;
-        }
+textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
 
-        .hidden {
-            display: none !important;
-        }
+.parse-button {
+    margin-top: 14px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
 
-        /* CARDS */
+.parse-button:hover {
+    background: #1d4ed8;
+}
 
-        .card {
-            background: white;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
+.result {
+    display: none;
+    margin-top: 18px;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: bold;
+}
 
-        .card h2,
-        .card h3 {
-            margin-top: 0;
-        }
+.result.valid {
+    display: block;
+    background: #064e3b;
+    border: 1px solid #10b981;
+    color: #a7f3d0;
+}
 
-        .description {
-            color: #666;
-        }
+.result.invalid {
+    display: block;
+    background: #7f1d1d;
+    border: 1px solid #ef4444;
+    color: #fecaca;
+}
 
-        /* INPUT */
+pre {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: Consolas, monospace;
+    color: #cbd5e1;
+}
 
-        textarea {
-            width: 100%;
-            min-height: 110px;
-            padding: 15px;
-            resize: vertical;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-family: Consolas, monospace;
-            font-size: 16px;
-            outline: none;
-        }
+code {
+    font-family: Consolas, monospace;
+}
 
-        textarea:focus {
-            border-color: #777;
-        }
+.examples {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
 
-        /* PARSE BUTTON */
+.valid-list {
+    color: #86efac;
+    line-height: 2;
+}
 
-        .parse-button {
-            margin-top: 15px;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 6px;
-            background: #222;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
+.invalid-list {
+    color: #fca5a5;
+    line-height: 2;
+}
 
-        .parse-button:hover {
-            background: #444;
-        }
+.grammar code {
+    display: block;
+    padding: 15px;
+    background: #0f172a;
+    border-radius: 8px;
+    color: #93c5fd;
+    line-height: 1.7;
+    white-space: pre-wrap;
+}
 
-        /* RESULT */
-
-        .result {
-            white-space: pre-line;
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-
-        .result.valid {
-            background: #dff5e1;
-            color: #176b2c;
-            border: 1px solid #9bd5a4;
-        }
-
-        .result.invalid {
-            background: #ffe1e1;
-            color: #9b1c1c;
-            border: 1px solid #e0a0a0;
-        }
-
-        /* TOKENS */
-
-        .tokens {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .token {
-            background: #222;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-family: Consolas, monospace;
-            font-size: 14px;
-        }
-
-        /* CODE */
-
-        pre {
-            background: #1e1e1e;
-            color: #eee;
-            padding: 18px;
-            border-radius: 6px;
-            overflow-x: auto;
-            line-height: 1.6;
-            white-space: pre-wrap;
-        }
-
-        code {
-            background: #eee;
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-family: Consolas, monospace;
-        }
-
-        .examples {
-            line-height: 1.8;
-        }
-
-        @media (max-width: 600px) {
-
-            body {
-                padding: 20px 10px;
-            }
-
-            .card {
-                padding: 18px;
-            }
-
-            .parser-selector {
-                flex-direction: column;
-            }
-
-            .selector {
-                width: 100%;
-            }
-        }
-
-    </style>
+@media (max-width: 700px) {
+    .examples {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 </head>
-
 
 <body>
 
+<header>
+    <h1>YACC Parser Visualizer</h1>
+    <p>Interactive demonstration of two separate parsers</p>
+</header>
+
+<div class="mode-buttons">
+    <button id="whileButton"
+            class="active"
+            onclick="showParser('while')">
+        While-Loop Parser
+    </button>
+
+    <button id="arithmeticButton"
+            onclick="showParser('arithmetic')">
+        Arithmetic Parser
+    </button>
+</div>
+
 <div class="container">
 
+<!-- ============================================================
+     WHILE PARSER
+     ============================================================ -->
 
-    <!-- HEADER -->
+<section id="whileParser" class="parser active">
 
-    <header>
+    <div class="card">
+        <h2>While-Loop Parser</h2>
 
-        <h1>YACC Parser</h1>
-
-        <p>
-            Compiler Design Parser Demonstration
+        <p class="description">
+            Parses while statements containing assignments,
+            arithmetic expressions and comparison expressions.
         </p>
 
-    </header>
+        <textarea id="whileInput">while (x < 10) x = x * 2;</textarea>
 
-
-    <!-- MODE BUTTONS -->
-
-    <div class="parser-selector">
-
-        <button
-            type="button"
-            id="whileButton"
-            class="selector active"
-            onclick="showParser('while')"
-        >
-            While-Loop Parser
+        <button class="parse-button" onclick="parseWhile()">
+            Parse While Loop
         </button>
 
-        <button
-            type="button"
-            id="arithmeticButton"
-            class="selector"
-            onclick="showParser('arithmetic')"
-        >
-            Arithmetic Parser
+        <div id="whileResult" class="result"></div>
+    </div>
+
+    <div class="card grammar">
+        <h3>Grammar</h3>
+
+        <code>
+stmt
+    → WHILE '(' condition ')' stmt
+    → ID '=' expression ';'
+
+condition
+    → expression comparison expression
+
+expression
+    → expression '+' term
+    → expression '-' term
+    → term
+
+term
+    → term '*' factor
+    → term '/' factor
+    → term '%' factor
+    → factor
+
+factor
+    → NUMBER
+    → ID
+    → '(' expression ')'
+    → '-' factor
+
+comparison
+    → '&lt;'
+    → '&gt;'
+    → '&lt;='
+    → '&gt;='
+    → '=='
+    → '!='
+        </code>
+    </div>
+
+    <div class="card">
+        <h3>Examples</h3>
+
+        <div class="examples">
+
+            <div>
+                <h4>Valid</h4>
+
+                <ul class="valid-list">
+                    <li><code>while (x &lt; 10) x = x + 1;</code></li>
+                    <li><code>while (x &gt; 10) x = x - 1;</code></li>
+                    <li><code>while (x &lt; 10) x = x * 2;</code></li>
+                    <li><code>while (x &lt; 10) x = x / 2;</code></li>
+                    <li><code>while (x &lt;= 100) x = x + x;</code></li>
+                    <li><code>while (x != 0) x = x / 2;</code></li>
+                    <li><code>while (x + 5 &gt; 10) x = x * 2;</code></li>
+                    <li><code>while ((x + 5) &gt; 10) x = (x + 2) * 3;</code></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4>Invalid</h4>
+
+                <ul class="invalid-list">
+                    <li><code>while (x = 10) x = x + 1;</code></li>
+                    <li><code>while (x &lt; 10) x = ;</code></li>
+                    <li><code>while (x &lt; 10) = x + 1;</code></li>
+                    <li><code>while (x &lt; 10) x = * 2;</code></li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Tokens</h3>
+        <pre id="whileTokens">Run the parser to see tokens.</pre>
+    </div>
+
+    <div class="card">
+        <h3>Parser Trace</h3>
+        <pre id="whileTrace">Run the parser to see the trace.</pre>
+    </div>
+
+</section>
+
+
+<!-- ============================================================
+     ARITHMETIC PARSER
+     ============================================================ -->
+
+<section id="arithmeticParser" class="parser">
+
+    <div class="card">
+
+        <h2>Arithmetic Expression Parser</h2>
+
+        <p class="description">
+            Parses arithmetic expressions using operator precedence,
+            parentheses and unary minus.
+        </p>
+
+        <textarea id="arithmeticInput">3 + 5 * (2 - 1)</textarea>
+
+        <button class="parse-button" onclick="parseArithmetic()">
+            Parse Arithmetic Expression
         </button>
+
+        <div id="arithmeticResult" class="result"></div>
+    </div>
+
+    <div class="card grammar">
+
+        <h3>Grammar</h3>
+
+        <code>
+expression
+    → expression '+' expression
+    → expression '-' expression
+    → expression '*' expression
+    → expression '/' expression
+    → '(' expression ')'
+    → '-' expression
+    → NUMBER
+        </code>
 
     </div>
 
+    <div class="card">
 
-    <!-- ==================================================
-         WHILE LOOP PARSER
-         ================================================== -->
+        <h3>Examples</h3>
 
-    <section id="whileParser" class="parser-section">
+        <div class="examples">
 
-        <div class="card">
+            <div>
+                <h4>Valid</h4>
 
-            <h2>While-Loop Parser</h2>
+                <ul class="valid-list">
+                    <li><code>3 + 5</code></li>
+                    <li><code>10 - 2 * 3</code></li>
+                    <li><code>(5 + 2) * 4</code></li>
+                    <li><code>-10 + 5</code></li>
+                    <li><code>10 / 2 + 3</code></li>
+                </ul>
+            </div>
 
-            <p class="description">
-                Parse a while-loop using the YACC grammar.
-            </p>
+            <div>
+                <h4>Invalid</h4>
 
-            <textarea id="whileInput">while (x < 10) x = x + 1;</textarea>
-
-            <button
-                type="button"
-                class="parse-button"
-                onclick="parseWhile()"
-            >
-                Parse While-Loop
-            </button>
-
-            <div
-                id="whileResult"
-                class="result"
-            >
-                Enter a while-loop and click Parse.
+                <ul class="invalid-list">
+                    <li><code>3 +</code></li>
+                    <li><code>* 5</code></li>
+                    <li><code>(3 + 5</code></li>
+                    <li><code>3 ** 5</code></li>
+                </ul>
             </div>
 
         </div>
-
-
-        <div class="card">
-
-            <h3>Tokens</h3>
-
-            <div id="whileTokens" class="tokens">
-                No tokens generated.
-            </div>
-
-        </div>
-
-
-        <div class="card">
-
-            <h3>Parsing Process</h3>
-
-            <pre id="whileTrace">No parsing performed.</pre>
-
-        </div>
-
-
-        <div class="card">
-
-            <h3>Grammar</h3>
-
-            <pre>stmt:
-      WHILE '(' expr ')' stmt
-    | ID ASSIGN expr SEMICOLON
-    ;
-
-expr:
-      ID LT NUMBER
-    | ID GT NUMBER
-    | ID PLUS NUMBER
-    | ID MINUS NUMBER
-    ;</pre>
-
-        </div>
-
-
-        <div class="card examples">
-
-            <h3>Examples</h3>
-
-            <h4>Valid</h4>
-
-            <ul>
-
-                <li>
-                    <code>while (x &lt; 10) x = x + 1;</code>
-                </li>
-
-                <li>
-                    <code>while (x &gt; 10) x = x - 1;</code>
-                </li>
-
-                <li>
-                    <code>while (count &lt; 100) count = count + 5;</code>
-                </li>
-
-            </ul>
-
-
-            <h4>Invalid</h4>
-
-            <ul>
-
-                <li>
-                    <code>while (x = 10) x = x + 1;</code>
-                </li>
-
-                <li>
-                    <code>while (x &lt; 10) x = x * 2;</code>
-                </li>
-
-                <li>
-                    <code>while (x &lt;= 10) x = x + 1;</code>
-                </li>
-
-            </ul>
-
-        </div>
-
-    </section>
-
-
-    <!-- ==================================================
-         ARITHMETIC PARSER
-         ================================================== -->
-
-    <section
-        id="arithmeticParser"
-        class="parser-section hidden"
-    >
-
-        <div class="card">
-
-            <h2>Arithmetic Expression Parser</h2>
-
-            <p class="description">
-                Parse arithmetic expressions using the YACC grammar.
-            </p>
-
-            <textarea id="arithmeticInput">10 + 5 * 2</textarea>
-
-            <button
-                type="button"
-                class="parse-button"
-                onclick="parseArithmetic()"
-            >
-                Parse Expression
-            </button>
-
-            <div
-                id="arithmeticResult"
-                class="result"
-            >
-                Enter an expression and click Parse.
-            </div>
-
-        </div>
-
-
-        <div class="card">
-
-            <h3>Tokens</h3>
-
-            <div id="arithmeticTokens" class="tokens">
-                No tokens generated.
-            </div>
-
-        </div>
-
-
-        <div class="card">
-
-            <h3>Parsing Process</h3>
-
-            <pre id="arithmeticTrace">No parsing performed.</pre>
-
-        </div>
-
-
-        <div class="card">
-
-            <h3>Grammar</h3>
-
-            <pre>expression:
-      expression '+' expression
-    | expression '-' expression
-    | expression '*' expression
-    | expression '/' expression
-    | '(' expression ')'
-    | '-' expression %prec UMINUS
-    | NUMBER
-    ;</pre>
-
-        </div>
-
-
-        <div class="card">
-
-            <h3>Operator Precedence</h3>
-
-            <pre>%left '+' '-'
-%left '*' '/'
-%right UMINUS</pre>
-
-        </div>
-
-
-        <div class="card examples">
-
-            <h3>Examples</h3>
-
-            <h4>Valid</h4>
-
-            <ul>
-
-                <li>
-                    <code>10 + 5</code>
-                </li>
-
-                <li>
-                    <code>10 + 5 * 2</code>
-                </li>
-
-                <li>
-                    <code>(10 + 5) * 2</code>
-                </li>
-
-                <li>
-                    <code>-10 + 5</code>
-                </li>
-
-                <li>
-                    <code>10 / 2 - 3</code>
-                </li>
-
-            </ul>
-
-
-            <h4>Invalid</h4>
-
-            <ul>
-
-                <li>
-                    <code>10 +</code>
-                </li>
-
-                <li>
-                    <code>* 10</code>
-                </li>
-
-                <li>
-                    <code>(10 + 5</code>
-                </li>
-
-                <li>
-                    <code>10 / / 2</code>
-                </li>
-
-                <li>
-                    <code>10 + abc</code>
-                </li>
-
-            </ul>
-
-        </div>
-
-    </section>
+    </div>
+
+    <div class="card">
+        <h3>Tokens</h3>
+        <pre id="arithmeticTokens">Run the parser to see tokens.</pre>
+    </div>
+
+    <div class="card">
+        <h3>Parser Trace</h3>
+        <pre id="arithmeticTrace">Run the parser to see the trace.</pre>
+    </div>
+
+</section>
 
 </div>
 
 
 <script>
 
-/* ==================================================
-   SWITCH BETWEEN PARSERS
-   ================================================== */
+/* ================================================================
+   MODE SWITCHING
+   ================================================================ */
 
-function showParser(parser) {
+function showParser(mode) {
 
-    const whileSection =
+    const whileParser =
         document.getElementById("whileParser");
 
-    const arithmeticSection =
+    const arithmeticParser =
         document.getElementById("arithmeticParser");
 
     const whileButton =
@@ -548,612 +425,330 @@ function showParser(parser) {
     const arithmeticButton =
         document.getElementById("arithmeticButton");
 
+    if (mode === "while") {
 
-    if (parser === "while") {
-
-        whileSection.classList.remove("hidden");
-
-        arithmeticSection.classList.add("hidden");
+        whileParser.classList.add("active");
+        arithmeticParser.classList.remove("active");
 
         whileButton.classList.add("active");
-
         arithmeticButton.classList.remove("active");
 
-    }
+    } else {
 
-    else if (parser === "arithmetic") {
-
-        whileSection.classList.add("hidden");
-
-        arithmeticSection.classList.remove("hidden");
+        whileParser.classList.remove("active");
+        arithmeticParser.classList.add("active");
 
         whileButton.classList.remove("active");
-
         arithmeticButton.classList.add("active");
-
     }
-
 }
 
 
-/* ==================================================
-   WHILE LOOP LEXER
-   ================================================== */
+/* ================================================================
+   WHILE LEXER
+   ================================================================ */
 
-class WhileLexer {
+function tokenizeWhile(input) {
 
-    constructor(input) {
+    const tokens = [];
+    let i = 0;
 
-        this.input = input;
+    while (i < input.length) {
 
-        this.position = 0;
+        const c = input[i];
 
-        this.tokens = [];
+        /* Whitespace */
 
-    }
-
-
-    tokenize() {
-
-        while (this.position < this.input.length) {
-
-            let c = this.input[this.position];
-
-
-            /* Ignore whitespace */
-
-            if (c === " " || c === "\t") {
-
-                this.position++;
-
-                continue;
-
-            }
-
-
-            /* Identifier / keyword */
-
-            if (/[a-zA-Z]/.test(c)) {
-
-                let word = "";
-
-                while (
-                    this.position < this.input.length &&
-                    /[a-zA-Z0-9]/.test(
-                        this.input[this.position]
-                    )
-                ) {
-
-                    word += this.input[this.position];
-
-                    this.position++;
-
-                }
-
-
-                if (word === "while") {
-
-                    this.tokens.push({
-                        type: "WHILE",
-                        value: word
-                    });
-
-                }
-
-                else {
-
-                    this.tokens.push({
-                        type: "ID",
-                        value: word
-                    });
-
-                }
-
-                continue;
-            }
-
-
-            /* Number */
-
-            if (/[0-9]/.test(c)) {
-
-                let number = "";
-
-                while (
-                    this.position < this.input.length &&
-                    /[0-9]/.test(
-                        this.input[this.position]
-                    )
-                ) {
-
-                    number += this.input[this.position];
-
-                    this.position++;
-
-                }
-
-
-                this.tokens.push({
-                    type: "NUMBER",
-                    value: number
-                });
-
-                continue;
-            }
-
-
-            /* Symbols */
-
-            const symbols = {
-                "(": "LPAREN",
-                ")": "RPAREN",
-                "<": "LT",
-                ">": "GT",
-                "=": "ASSIGN",
-                "+": "PLUS",
-                "-": "MINUS",
-                ";": "SEMICOLON"
-            };
-
-
-            if (symbols[c]) {
-
-                this.tokens.push({
-                    type: symbols[c],
-                    value: c
-                });
-
-                this.position++;
-
-                continue;
-            }
-
-
-            throw new Error(
-                `Invalid character '${c}'`
-            );
-
+        if (/\s/.test(c)) {
+            i++;
+            continue;
         }
 
+        /* Identifier / keyword */
 
-        this.tokens.push({
-            type: "EOF",
-            value: "EOF"
+        if (/[A-Za-z_]/.test(c)) {
+
+            let word = "";
+
+            while (
+                i < input.length &&
+                /[A-Za-z0-9_]/.test(input[i])
+            ) {
+                word += input[i];
+                i++;
+            }
+
+            if (word === "while") {
+
+                tokens.push({
+                    type: "WHILE",
+                    value: word
+                });
+
+            } else {
+
+                tokens.push({
+                    type: "ID",
+                    value: word
+                });
+            }
+
+            continue;
+        }
+
+        /* Number */
+
+        if (/[0-9]/.test(c)) {
+
+            let number = "";
+
+            while (
+                i < input.length &&
+                /[0-9]/.test(input[i])
+            ) {
+                number += input[i];
+                i++;
+            }
+
+            tokens.push({
+                type: "NUMBER",
+                value: number
+            });
+
+            continue;
+        }
+
+        /* Two-character operators */
+
+        const twoChar =
+            input.substring(i, i + 2);
+
+        if (
+            twoChar === "<=" ||
+            twoChar === ">=" ||
+            twoChar === "==" ||
+            twoChar === "!="
+        ) {
+
+            tokens.push({
+                type: "COMPARISON",
+                value: twoChar
+            });
+
+            i += 2;
+            continue;
+        }
+
+        /* Single-character tokens */
+
+        const tokenMap = {
+
+            "(": "LPAREN",
+            ")": "RPAREN",
+
+            "=": "ASSIGN",
+
+            "+": "PLUS",
+            "-": "MINUS",
+            "*": "MULTIPLY",
+            "/": "DIVIDE",
+            "%": "MODULO",
+
+            "<": "COMPARISON",
+            ">": "COMPARISON",
+
+            ";": "SEMICOLON"
+        };
+
+        if (tokenMap[c]) {
+
+            tokens.push({
+                type: tokenMap[c],
+                value: c
+            });
+
+            i++;
+            continue;
+        }
+
+        /* Invalid character */
+
+        tokens.push({
+            type: "INVALID",
+            value: c
         });
 
-
-        return this.tokens;
-
+        i++;
     }
 
+    tokens.push({
+        type: "EOF",
+        value: "EOF"
+    });
+
+    return tokens;
 }
 
 
-/* ==================================================
-   WHILE LOOP PARSER
-   ================================================== */
+/* ================================================================
+   WHILE PARSER
+   ================================================================ */
 
 class WhileParser {
 
     constructor(tokens) {
 
         this.tokens = tokens;
-
-        this.position = 0;
-
+        this.pos = 0;
         this.trace = [];
-
     }
-
 
     current() {
-
-        return this.tokens[this.position];
-
+        return this.tokens[this.pos];
     }
-
 
     consume(type) {
 
         const token = this.current();
 
-
         if (token.type !== type) {
 
             throw new Error(
-                `Expected ${type}, found ${token.type}`
+                "Expected " +
+                type +
+                " but found '" +
+                token.value +
+                "'"
             );
-
         }
 
-
         this.trace.push(
-            `Matched ${type} → ${token.value}`
+            "MATCH " +
+            type +
+            " → " +
+            token.value
         );
 
+        this.pos++;
 
-        this.position++;
+        return token;
+    }
 
+    parse() {
+
+        this.trace.push("START → stmt");
+
+        this.parseStmt();
+
+        if (this.current().type !== "EOF") {
+
+            throw new Error(
+                "Unexpected token '" +
+                this.current().value +
+                "'"
+            );
+        }
+
+        this.trace.push("ACCEPT");
     }
 
 
-    /*
-       stmt:
-             WHILE '(' expr ')' stmt
-           | ID ASSIGN expr SEMICOLON
-    */
+    /* ------------------------------------------------------------
+       stmt
+       ------------------------------------------------------------ */
 
     parseStmt() {
 
         if (this.current().type === "WHILE") {
 
             this.trace.push(
-                "stmt → WHILE '(' expr ')' stmt"
+                "stmt → WHILE '(' condition ')' stmt"
             );
 
             this.consume("WHILE");
-
             this.consume("LPAREN");
 
-            this.parseExpr();
+            this.parseCondition();
 
             this.consume("RPAREN");
 
             this.parseStmt();
 
+            return;
         }
 
-        else if (this.current().type === "ID") {
+
+        if (this.current().type === "ID") {
 
             this.trace.push(
-                "stmt → ID ASSIGN expr SEMICOLON"
+                "stmt → ID '=' expression ';'"
             );
 
             this.consume("ID");
 
             this.consume("ASSIGN");
 
-            this.parseExpr();
+            this.parseExpression();
 
             this.consume("SEMICOLON");
 
+            return;
         }
 
-        else {
 
-            throw new Error(
-                `Expected WHILE or ID, found ${this.current().type}`
-            );
-
-        }
-
+        throw new Error(
+            "Expected WHILE or ID but found '" +
+            this.current().value +
+            "'"
+        );
     }
 
 
-    /*
-       expr:
-             ID LT NUMBER
-           | ID GT NUMBER
-           | ID PLUS NUMBER
-           | ID MINUS NUMBER
-    */
+    /* ------------------------------------------------------------
+       condition
+       ------------------------------------------------------------ */
 
-    parseExpr() {
+    parseCondition() {
 
         this.trace.push(
-            "expr → ID (LT | GT | PLUS | MINUS) NUMBER"
+            "condition → expression comparison expression"
         );
 
-
-        this.consume("ID");
-
-
-        const operator =
-            this.current().type;
-
-
-        if (
-            operator !== "LT" &&
-            operator !== "GT" &&
-            operator !== "PLUS" &&
-            operator !== "MINUS"
-        ) {
-
-            throw new Error(
-                `Expected LT, GT, PLUS or MINUS, found ${operator}`
-            );
-
-        }
-
-
-        this.consume(operator);
-
-        this.consume("NUMBER");
-
-    }
-
-
-    parse() {
-
-        this.parseStmt();
-
-
-        if (this.current().type !== "EOF") {
-
-            throw new Error(
-                `Unexpected token '${this.current().value}'`
-            );
-
-        }
-
-    }
-
-}
-
-
-/* ==================================================
-   WHILE LOOP PARSE
-   ================================================== */
-
-function parseWhile() {
-
-    const input =
-        document.getElementById("whileInput").value.trim();
-
-    const result =
-        document.getElementById("whileResult");
-
-    const tokenBox =
-        document.getElementById("whileTokens");
-
-    const traceBox =
-        document.getElementById("whileTrace");
-
-
-    tokenBox.innerHTML = "";
-
-    traceBox.textContent = "";
-
-
-    if (!input) {
-
-        result.textContent =
-            "Please enter a while-loop.";
-
-        result.className =
-            "result invalid";
-
-        return;
-
-    }
-
-
-    try {
-
-        const lexer =
-            new WhileLexer(input);
-
-        const tokens =
-            lexer.tokenize();
-
-
-        displayTokens(
-            tokens,
-            tokenBox
-        );
-
-
-        const parser =
-            new WhileParser(tokens);
-
-        parser.parse();
-
-
-        result.textContent =
-            "✓ Valid while-loop";
-
-        result.className =
-            "result valid";
-
-
-        displayTrace(
-            parser.trace,
-            traceBox
-        );
-
-    }
-
-    catch (error) {
-
-        result.textContent =
-            "✗ Invalid while-loop\n" +
-            error.message;
-
-        result.className =
-            "result invalid";
-
-
-        traceBox.textContent =
-            "Parsing failed.\n\n" +
-            error.message;
-
-    }
-
-}
-
-
-/* ==================================================
-   ARITHMETIC LEXER
-   ================================================== */
-
-class ArithmeticLexer {
-
-    constructor(input) {
-
-        this.input = input;
-
-        this.position = 0;
-
-        this.tokens = [];
-
-    }
-
-
-    tokenize() {
-
-        while (this.position < this.input.length) {
-
-            let c = this.input[this.position];
-
-
-            /* Ignore whitespace */
-
-            if (c === " " || c === "\t") {
-
-                this.position++;
-
-                continue;
-
-            }
-
-
-            /* Number */
-
-            if (/[0-9]/.test(c)) {
-
-                let number = "";
-
-                while (
-                    this.position < this.input.length &&
-                    /[0-9]/.test(
-                        this.input[this.position]
-                    )
-                ) {
-
-                    number += this.input[this.position];
-
-                    this.position++;
-
-                }
-
-
-                this.tokens.push({
-                    type: "NUMBER",
-                    value: number
-                });
-
-                continue;
-
-            }
-
-
-            /* Operators and parentheses */
-
-            const symbols = {
-                "+": "PLUS",
-                "-": "MINUS",
-                "*": "MULTIPLY",
-                "/": "DIVIDE",
-                "(": "LPAREN",
-                ")": "RPAREN"
-            };
-
-
-            if (symbols[c]) {
-
-                this.tokens.push({
-                    type: symbols[c],
-                    value: c
-                });
-
-                this.position++;
-
-                continue;
-
-            }
-
-
-            throw new Error(
-                `Invalid character '${c}'`
-            );
-
-        }
-
-
-        this.tokens.push({
-            type: "EOF",
-            value: "EOF"
-        });
-
-
-        return this.tokens;
-
-    }
-
-}
-
-
-/* ==================================================
-   ARITHMETIC PARSER
-   ================================================== */
-
-class ArithmeticParser {
-
-    constructor(tokens) {
-
-        this.tokens = tokens;
-
-        this.position = 0;
-
-        this.trace = [];
-
-    }
-
-
-    current() {
-
-        return this.tokens[this.position];
-
-    }
-
-
-    consume(type) {
+        this.parseExpression();
 
         const token = this.current();
 
-
-        if (token.type !== type) {
+        if (token.type !== "COMPARISON") {
 
             throw new Error(
-                `Expected ${type}, found ${token.type}`
+                "Expected comparison operator but found '" +
+                token.value +
+                "'"
             );
-
         }
 
-
         this.trace.push(
-            `Matched ${type} → ${token.value}`
+            "comparison → " +
+            token.value
         );
 
+        this.pos++;
 
-        this.position++;
-
+        this.parseExpression();
     }
 
 
-    /*
-       Handles + and -
-    */
+    /* ------------------------------------------------------------
+       expression
+       ------------------------------------------------------------ */
 
     parseExpression() {
 
         this.trace.push(
-            "expression → term ((+ | -) term)*"
+            "expression → term"
         );
 
-
         this.parseTerm();
-
 
         while (
             this.current().type === "PLUS" ||
@@ -1163,70 +758,110 @@ class ArithmeticParser {
             const operator =
                 this.current().type;
 
+            if (operator === "PLUS") {
 
-            this.consume(operator);
+                this.consume("PLUS");
+
+                this.trace.push(
+                    "expression → expression + term"
+                );
+
+            } else {
+
+                this.consume("MINUS");
+
+                this.trace.push(
+                    "expression → expression - term"
+                );
+            }
 
             this.parseTerm();
-
         }
-
     }
 
 
-    /*
-       Handles * and /
-    */
+    /* ------------------------------------------------------------
+       term
+       ------------------------------------------------------------ */
 
     parseTerm() {
 
         this.trace.push(
-            "term → factor ((* | /) factor)*"
+            "term → factor"
         );
-
 
         this.parseFactor();
 
-
         while (
             this.current().type === "MULTIPLY" ||
-            this.current().type === "DIVIDE"
+            this.current().type === "DIVIDE" ||
+            this.current().type === "MODULO"
         ) {
 
             const operator =
                 this.current().type;
 
+            if (operator === "MULTIPLY") {
 
-            this.consume(operator);
+                this.consume("MULTIPLY");
+
+                this.trace.push(
+                    "term → term * factor"
+                );
+
+            } else if (operator === "DIVIDE") {
+
+                this.consume("DIVIDE");
+
+                this.trace.push(
+                    "term → term / factor"
+                );
+
+            } else {
+
+                this.consume("MODULO");
+
+                this.trace.push(
+                    "term → term % factor"
+                );
+            }
 
             this.parseFactor();
-
         }
-
     }
 
 
-    /*
-       Handles:
-       NUMBER
-       -factor
-       (expression)
-    */
+    /* ------------------------------------------------------------
+       factor
+       ------------------------------------------------------------ */
 
     parseFactor() {
-
-        this.trace.push(
-            "factor → NUMBER | '-' factor | '(' expression ')'"
-        );
-
 
         /* NUMBER */
 
         if (this.current().type === "NUMBER") {
 
+            this.trace.push(
+                "factor → NUMBER"
+            );
+
             this.consume("NUMBER");
 
             return;
+        }
 
+
+        /* ID */
+
+        if (this.current().type === "ID") {
+
+            this.trace.push(
+                "factor → ID"
+            );
+
+            this.consume("ID");
+
+            return;
         }
 
 
@@ -1234,18 +869,25 @@ class ArithmeticParser {
 
         if (this.current().type === "MINUS") {
 
+            this.trace.push(
+                "factor → '-' factor"
+            );
+
             this.consume("MINUS");
 
             this.parseFactor();
 
             return;
-
         }
 
 
-        /* Parentheses */
+        /* Parenthesized expression */
 
         if (this.current().type === "LPAREN") {
+
+            this.trace.push(
+                "factor → '(' expression ')'"
+            );
 
             this.consume("LPAREN");
 
@@ -1254,85 +896,478 @@ class ArithmeticParser {
             this.consume("RPAREN");
 
             return;
-
         }
 
 
         throw new Error(
-            `Expected NUMBER, '-' or '(', found ${this.current().type}`
+            "Expected ID, NUMBER, '-' or '(' but found '" +
+            this.current().value +
+            "'"
         );
-
     }
-
-
-    parse() {
-
-        this.parseExpression();
-
-
-        if (this.current().type !== "EOF") {
-
-            throw new Error(
-                `Unexpected token '${this.current().value}'`
-            );
-
-        }
-
-    }
-
 }
 
 
-/* ==================================================
-   ARITHMETIC PARSE
-   ================================================== */
+/* ================================================================
+   WHILE PARSER UI
+   ================================================================ */
 
-function parseArithmetic() {
+function parseWhile() {
 
     const input =
-        document.getElementById("arithmeticInput").value.trim();
+        document
+            .getElementById("whileInput")
+            .value
+            .trim();
 
     const result =
-        document.getElementById("arithmeticResult");
+        document.getElementById("whileResult");
 
-    const tokenBox =
-        document.getElementById("arithmeticTokens");
+    const tokenOutput =
+        document.getElementById("whileTokens");
 
-    const traceBox =
-        document.getElementById("arithmeticTrace");
+    const traceOutput =
+        document.getElementById("whileTrace");
 
 
-    tokenBox.innerHTML = "";
-
-    traceBox.textContent = "";
+    result.className = "result";
+    result.textContent = "";
 
 
     if (!input) {
 
-        result.textContent =
-            "Please enter an arithmetic expression.";
-
         result.className =
             "result invalid";
 
-        return;
+        result.textContent =
+            "✗ Invalid while-loop: empty input.";
 
+        return;
     }
 
 
     try {
 
-        const lexer =
-            new ArithmeticLexer(input);
+        const tokens =
+            tokenizeWhile(input);
+
+
+        /* Reject lexer errors */
+
+        const invalid =
+            tokens.find(
+                token =>
+                    token.type === "INVALID"
+            );
+
+
+        if (invalid) {
+
+            throw new Error(
+                "Invalid token '" +
+                invalid.value +
+                "'"
+            );
+        }
+
+
+        /* Display tokens */
+
+        tokenOutput.textContent =
+            tokens
+                .filter(
+                    token =>
+                        token.type !== "EOF"
+                )
+                .map(
+                    token =>
+                        token.type +
+                        " → " +
+                        token.value
+                )
+                .join("\n");
+
+
+        /* Parse */
+
+        const parser =
+            new WhileParser(tokens);
+
+        parser.parse();
+
+
+        traceOutput.textContent =
+            parser.trace.join("\n");
+
+
+        result.className =
+            "result valid";
+
+        result.textContent =
+            "✓ Valid while-loop";
+
+
+    } catch (error) {
+
+        result.className =
+            "result invalid";
+
+        result.textContent =
+            "✗ Invalid while-loop: " +
+            error.message;
+
+        traceOutput.textContent =
+            "PARSING FAILED\n\n" +
+            error.message;
+    }
+}
+
+
+/* ================================================================
+   ARITHMETIC LEXER
+   ================================================================ */
+
+function tokenizeArithmetic(input) {
+
+    const tokens = [];
+    let i = 0;
+
+    while (i < input.length) {
+
+        const c = input[i];
+
+
+        if (/\s/.test(c)) {
+
+            i++;
+            continue;
+        }
+
+
+        if (/[0-9]/.test(c)) {
+
+            let number = "";
+
+            while (
+                i < input.length &&
+                /[0-9]/.test(input[i])
+            ) {
+
+                number += input[i];
+                i++;
+            }
+
+            tokens.push({
+                type: "NUMBER",
+                value: number
+            });
+
+            continue;
+        }
+
+
+        const map = {
+
+            "+": "PLUS",
+            "-": "MINUS",
+            "*": "MULTIPLY",
+            "/": "DIVIDE",
+            "(": "LPAREN",
+            ")": "RPAREN"
+        };
+
+
+        if (map[c]) {
+
+            tokens.push({
+                type: map[c],
+                value: c
+            });
+
+            i++;
+            continue;
+        }
+
+
+        tokens.push({
+            type: "INVALID",
+            value: c
+        });
+
+        i++;
+    }
+
+
+    tokens.push({
+        type: "EOF",
+        value: "EOF"
+    });
+
+
+    return tokens;
+}
+
+
+/* ================================================================
+   ARITHMETIC PARSER
+   ================================================================ */
+
+class ArithmeticParser {
+
+    constructor(tokens) {
+
+        this.tokens = tokens;
+        this.pos = 0;
+        this.trace = [];
+    }
+
+
+    current() {
+        return this.tokens[this.pos];
+    }
+
+
+    consume(type) {
+
+        const token =
+            this.current();
+
+
+        if (token.type !== type) {
+
+            throw new Error(
+                "Expected " +
+                type +
+                " but found '" +
+                token.value +
+                "'"
+            );
+        }
+
+
+        this.trace.push(
+            "MATCH " +
+            type +
+            " → " +
+            token.value
+        );
+
+
+        this.pos++;
+
+        return token;
+    }
+
+
+    parse() {
+
+        this.trace.push(
+            "START → expression"
+        );
+
+        this.parseExpression();
+
+
+        if (
+            this.current().type !==
+            "EOF"
+        ) {
+
+            throw new Error(
+                "Unexpected token '" +
+                this.current().value +
+                "'"
+            );
+        }
+
+
+        this.trace.push(
+            "ACCEPT"
+        );
+    }
+
+
+    parseExpression() {
+
+        this.parseTerm();
+
+        while (
+            this.current().type === "PLUS" ||
+            this.current().type === "MINUS"
+        ) {
+
+            if (
+                this.current().type ===
+                "PLUS"
+            ) {
+
+                this.consume("PLUS");
+
+            } else {
+
+                this.consume("MINUS");
+            }
+
+            this.parseTerm();
+        }
+    }
+
+
+    parseTerm() {
+
+        this.parseFactor();
+
+        while (
+            this.current().type === "MULTIPLY" ||
+            this.current().type === "DIVIDE"
+        ) {
+
+            if (
+                this.current().type ===
+                "MULTIPLY"
+            ) {
+
+                this.consume("MULTIPLY");
+
+            } else {
+
+                this.consume("DIVIDE");
+            }
+
+            this.parseFactor();
+        }
+    }
+
+
+    parseFactor() {
+
+        if (
+            this.current().type ===
+            "NUMBER"
+        ) {
+
+            this.consume("NUMBER");
+            return;
+        }
+
+
+        if (
+            this.current().type ===
+            "MINUS"
+        ) {
+
+            this.consume("MINUS");
+
+            this.parseFactor();
+
+            return;
+        }
+
+
+        if (
+            this.current().type ===
+            "LPAREN"
+        ) {
+
+            this.consume("LPAREN");
+
+            this.parseExpression();
+
+            this.consume("RPAREN");
+
+            return;
+        }
+
+
+        throw new Error(
+            "Expected NUMBER, '-' or '(' but found '" +
+            this.current().value +
+            "'"
+        );
+    }
+}
+
+
+/* ================================================================
+   ARITHMETIC PARSER UI
+   ================================================================ */
+
+function parseArithmetic() {
+
+    const input =
+        document
+            .getElementById("arithmeticInput")
+            .value
+            .trim();
+
+    const result =
+        document.getElementById(
+            "arithmeticResult"
+        );
+
+    const tokenOutput =
+        document.getElementById(
+            "arithmeticTokens"
+        );
+
+    const traceOutput =
+        document.getElementById(
+            "arithmeticTrace"
+        );
+
+
+    result.className = "result";
+    result.textContent = "";
+
+
+    if (!input) {
+
+        result.className =
+            "result invalid";
+
+        result.textContent =
+            "✗ Invalid expression: empty input.";
+
+        return;
+    }
+
+
+    try {
 
         const tokens =
-            lexer.tokenize();
+            tokenizeArithmetic(input);
 
 
-        displayTokens(
-            tokens,
-            tokenBox
-        );
+        const invalid =
+            tokens.find(
+                token =>
+                    token.type === "INVALID"
+            );
+
+
+        if (invalid) {
+
+            throw new Error(
+                "Invalid token '" +
+                invalid.value +
+                "'"
+            );
+        }
+
+
+        tokenOutput.textContent =
+            tokens
+                .filter(
+                    token =>
+                        token.type !== "EOF"
+                )
+                .map(
+                    token =>
+                        token.type +
+                        " → " +
+                        token.value
+                )
+                .join("\n");
 
 
         const parser =
@@ -1341,82 +1376,41 @@ function parseArithmetic() {
         parser.parse();
 
 
-        result.textContent =
-            "✓ Valid expression";
+        traceOutput.textContent =
+            parser.trace.join("\n");
+
 
         result.className =
             "result valid";
 
-
-        displayTrace(
-            parser.trace,
-            traceBox
-        );
-
-    }
-
-    catch (error) {
-
         result.textContent =
-            "✗ Invalid expression\n" +
-            error.message;
+            "✓ Valid expression";
+
+
+    } catch (error) {
 
         result.className =
             "result invalid";
 
-
-        traceBox.textContent =
-            "Parsing failed.\n\n" +
+        result.textContent =
+            "✗ Invalid expression: " +
             error.message;
 
+        traceOutput.textContent =
+            "PARSING FAILED\n\n" +
+            error.message;
     }
-
 }
 
 
-/* ==================================================
-   DISPLAY FUNCTIONS
-   ================================================== */
+/* ================================================================
+   INITIAL PARSE
+   ================================================================ */
 
-function displayTokens(tokens, container) {
-
-    tokens
-        .filter(token => token.type !== "EOF")
-        .forEach(token => {
-
-            const span =
-                document.createElement("span");
-
-
-            span.className = "token";
-
-
-            span.textContent =
-                `${token.type}: ${token.value}`;
-
-
-            container.appendChild(span);
-
-        });
-
-}
-
-
-function displayTrace(trace, container) {
-
-    container.textContent =
-        trace
-            .map(
-                (item, index) =>
-                    `${index + 1}. ${item}`
-            )
-            .join("\n");
-
-}
+parseWhile();
 
 </script>
 
 </body>
-
 </html>
 ```
