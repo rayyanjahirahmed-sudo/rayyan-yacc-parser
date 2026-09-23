@@ -1,562 +1,391 @@
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>YACC While-Loop Parser</title>
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>YACC Parser</title>
 
     <link rel="stylesheet" href="style.css">
+
 </head>
+
 
 <body>
 
-    <div class="container">
+<div class="container">
+
+
+    <!-- HEADER -->
+
+    <header>
 
         <h1>YACC Parser</h1>
 
-        <p class="subtitle">
-            Browser-based YACC-style parser for while-loop syntax
+        <p>
+            Compiler Design Parser Demonstration
         </p>
 
-        <div class="parser-box">
+    </header>
+
+
+    <!-- PARSER SELECTOR -->
+
+    <div class="parser-selector">
+
+        <button
+            id="whileButton"
+            class="selector active"
+            onclick="showParser('while')"
+        >
+            While-Loop Parser
+        </button>
+
+
+        <button
+            id="arithmeticButton"
+            class="selector"
+            onclick="showParser('arithmetic')"
+        >
+            Arithmetic Parser
+        </button>
+
+    </div>
+
+
+    <!-- ==========================================
+         WHILE LOOP PARSER
+         ========================================== -->
+
+    <section
+        id="whileParser"
+        class="parser-section"
+    >
+
+        <div class="card">
 
             <h2>While-Loop Parser</h2>
 
-            <textarea id="whileInput">while (x < 10) x = x + 1;</textarea>
+            <p class="description">
+                Parse a while-loop using the specified
+                YACC grammar.
+            </p>
 
-            <button onclick="parseInput()">Parse While-Loop</button>
 
-            <div id="result" class="result">
+            <textarea
+                id="whileInput"
+            >while (x < 10) x = x + 1;</textarea>
+
+
+            <button
+                class="parse-button"
+                onclick="parseWhile()"
+            >
+                Parse While-Loop
+            </button>
+
+
+            <div
+                id="whileResult"
+                class="result"
+            >
                 Enter a while-loop and click Parse.
             </div>
 
         </div>
 
-        <div class="output-grid">
 
-            <div class="panel">
-                <h3>Tokens</h3>
-                <pre id="tokens">No tokens generated.</pre>
-            </div>
+        <!-- WHILE TOKENS -->
 
-            <div class="panel">
-                <h3>Parser Trace</h3>
-                <pre id="trace">No parsing performed.</pre>
+        <div class="card">
+
+            <h3>Tokens</h3>
+
+            <div
+                id="whileTokens"
+                class="tokens"
+            >
+                No tokens generated.
             </div>
 
         </div>
 
-        <div class="examples">
 
-            <h3>Valid Examples</h3>
+        <!-- WHILE TRACE -->
 
-            <ul>
-                <li>while (x &lt; 10) x = x;</li>
-                <li>while (x &lt; 10) x = x + 1;</li>
-                <li>while (x &gt; 10) x = x - 1;</li>
-                <li>while (x &lt;= 10) x = x * 2;</li>
-                <li>while (x &gt;= 10) x = x / 2;</li>
-                <li>while (x != 10) x = x + 1;</li>
-            </ul>
+        <div class="card">
 
-            <h3>Invalid Examples</h3>
+            <h3>Parsing Process</h3>
 
-            <ul>
-                <li>while (x = 10) x = x + 1;</li>
-                <li>while (x &lt; 10) x = x % 2;</li>
-                <li>while x &lt; 10 x = x + 1;</li>
-                <li>while (x &lt; 10) x + 1;</li>
-                <li>while (x &lt; 10) x = ;</li>
-            </ul>
+            <pre id="whileTrace">No parsing performed.</pre>
 
         </div>
 
-        <div class="grammar">
+
+        <!-- WHILE GRAMMAR -->
+
+        <div class="card">
 
             <h3>Grammar</h3>
 
             <pre>
-WHILE_LOOP → while ( CONDITION ) STATEMENT ;
+stmt:
+      WHILE '(' expr ')' stmt
+    | ID ASSIGN expr SEMICOLON
+    ;
 
-CONDITION  → EXPRESSION REL_OP EXPRESSION
-
-STATEMENT  → ID = EXPRESSION
-
-EXPRESSION → TERM ((+ | -) TERM)*
-
-TERM       → FACTOR ((* | /) FACTOR)*
-
-FACTOR     → ID | NUMBER | ( EXPRESSION )
-
-REL_OP     → &lt; | &gt; | &lt;= | &gt;= | == | !=
+expr:
+      ID LT NUMBER
+    | ID GT NUMBER
+    | ID PLUS NUMBER
+    | ID MINUS NUMBER
+    ;
             </pre>
 
         </div>
 
-    </div>
-
-    <script>
-
-        /*
-         * ==========================================
-         * LEXER
-         * ==========================================
-         */
-
-        class Lexer {
-
-            constructor(input) {
-                this.input = input;
-                this.position = 0;
-                this.tokens = [];
-            }
-
-            tokenize() {
-
-                while (this.position < this.input.length) {
-
-                    let current = this.input[this.position];
-
-                    // Ignore whitespace
-                    if (/\s/.test(current)) {
-                        this.position++;
-                        continue;
-                    }
-
-                    // Identifier / keyword
-                    if (/[a-zA-Z_]/.test(current)) {
-
-                        let start = this.position;
-
-                        while (
-                            this.position < this.input.length &&
-                            /[a-zA-Z0-9_]/.test(this.input[this.position])
-                        ) {
-                            this.position++;
-                        }
-
-                        let word = this.input.substring(
-                            start,
-                            this.position
-                        );
-
-                        if (word === "while") {
-                            this.tokens.push({
-                                type: "WHILE",
-                                value: word
-                            });
-                        } else {
-                            this.tokens.push({
-                                type: "ID",
-                                value: word
-                            });
-                        }
-
-                        continue;
-                    }
-
-                    // Number
-                    if (/[0-9]/.test(current)) {
-
-                        let start = this.position;
-
-                        while (
-                            this.position < this.input.length &&
-                            /[0-9]/.test(this.input[this.position])
-                        ) {
-                            this.position++;
-                        }
-
-                        this.tokens.push({
-                            type: "NUMBER",
-                            value: this.input.substring(
-                                start,
-                                this.position
-                            )
-                        });
-
-                        continue;
-                    }
-
-                    // Two-character operators
-                    let twoChar =
-                        this.input.substring(
-                            this.position,
-                            this.position + 2
-                        );
-
-                    if (
-                        twoChar === "<=" ||
-                        twoChar === ">=" ||
-                        twoChar === "==" ||
-                        twoChar === "!="
-                    ) {
-
-                        this.tokens.push({
-                            type: "REL_OP",
-                            value: twoChar
-                        });
 
-                        this.position += 2;
-                        continue;
-                    }
+        <!-- WHILE EXAMPLES -->
 
-                    // Single-character operators
-                    let operators = {
-                        "<": "REL_OP",
-                        ">": "REL_OP",
-                        "=": "ASSIGN",
-                        "+": "PLUS",
-                        "-": "MINUS",
-                        "*": "MULTIPLY",
-                        "/": "DIVIDE",
-                        "(": "LPAREN",
-                        ")": "RPAREN",
-                        ";": "SEMICOLON"
-                    };
+        <div class="card examples">
 
-                    if (operators[current]) {
+            <h3>Examples</h3>
 
-                        this.tokens.push({
-                            type: operators[current],
-                            value: current
-                        });
+            <h4>Valid</h4>
 
-                        this.position++;
-                        continue;
-                    }
+            <ul>
 
-                    throw new Error(
-                        `Unknown character '${current}' at position ${this.position}`
-                    );
-                }
+                <li>
+                    <code>
+                        while (x &lt; 10) x = x + 1;
+                    </code>
+                </li>
 
-                this.tokens.push({
-                    type: "EOF",
-                    value: "EOF"
-                });
+                <li>
+                    <code>
+                        while (x &gt; 10) x = x - 1;
+                    </code>
+                </li>
 
-                return this.tokens;
-            }
-        }
+                <li>
+                    <code>
+                        while (count &lt; 100) count = count + 5;
+                    </code>
+                </li>
 
+            </ul>
 
-        /*
-         * ==========================================
-         * YACC-STYLE PARSER
-         * ==========================================
-         */
 
-        class Parser {
+            <h4>Invalid</h4>
 
-            constructor(tokens) {
+            <ul>
 
-                this.tokens = tokens;
-                this.position = 0;
-                this.trace = [];
-            }
+                <li>
+                    <code>
+                        while (x = 10) x = x + 1;
+                    </code>
+                </li>
 
-            current() {
-                return this.tokens[this.position];
-            }
+                <li>
+                    <code>
+                        while (x &lt; 10) x = x * 2;
+                    </code>
+                </li>
 
-            consume(type) {
+                <li>
+                    <code>
+                        while (x &lt;= 10) x = x + 1;
+                    </code>
+                </li>
 
-                if (this.current().type === type) {
+            </ul>
 
-                    let token = this.current();
+        </div>
 
-                    this.position++;
+    </section>
 
-                    return token;
 
-                } else {
+    <!-- ==========================================
+         ARITHMETIC PARSER
+         ========================================== -->
 
-                    throw new Error(
-                        `Expected ${type}, found '${this.current().value}'`
-                    );
-                }
-            }
+    <section
+        id="arithmeticParser"
+        class="parser-section hidden"
+    >
 
-            addTrace(rule) {
-                this.trace.push(rule);
-            }
+        <div class="card">
 
+            <h2>Arithmetic Expression Parser</h2>
 
-            /*
-             * WHILE_LOOP
-             *
-             * WHILE_LOOP
-             *     → WHILE ( CONDITION ) STATEMENT ;
-             */
+            <p class="description">
+                Parse arithmetic expressions using
+                the specified YACC grammar.
+            </p>
 
-            parseWhileLoop() {
 
-                this.addTrace(
-                    "WHILE_LOOP → while ( CONDITION ) STATEMENT ;"
-                );
+            <textarea
+                id="arithmeticInput"
+            >10 + 5 * 2</textarea>
 
-                this.consume("WHILE");
 
-                this.consume("LPAREN");
+            <button
+                class="parse-button"
+                onclick="parseArithmetic()"
+            >
+                Parse Expression
+            </button>
 
-                this.parseCondition();
 
-                this.consume("RPAREN");
+            <div
+                id="arithmeticResult"
+                class="result"
+            >
+                Enter an expression and click Parse.
+            </div>
 
-                this.parseStatement();
+        </div>
 
-                this.consume("SEMICOLON");
 
-                if (this.current().type !== "EOF") {
+        <!-- ARITHMETIC TOKENS -->
 
-                    throw new Error(
-                        `Unexpected token '${this.current().value}'`
-                    );
-                }
-            }
+        <div class="card">
 
+            <h3>Tokens</h3>
 
-            /*
-             * CONDITION
-             *
-             * CONDITION
-             *     → EXPRESSION REL_OP EXPRESSION
-             */
+            <div
+                id="arithmeticTokens"
+                class="tokens"
+            >
+                No tokens generated.
+            </div>
 
-            parseCondition() {
+        </div>
 
-                this.addTrace(
-                    "CONDITION → EXPRESSION REL_OP EXPRESSION"
-                );
 
-                this.parseExpression();
+        <!-- ARITHMETIC TRACE -->
 
-                if (this.current().type !== "REL_OP") {
+        <div class="card">
 
-                    throw new Error(
-                        `Expected relational operator, found '${this.current().value}'`
-                    );
-                }
+            <h3>Parsing Process</h3>
 
-                this.consume("REL_OP");
+            <pre id="arithmeticTrace">No parsing performed.</pre>
 
-                this.parseExpression();
-            }
+        </div>
 
 
-            /*
-             * STATEMENT
-             *
-             * STATEMENT
-             *     → ID = EXPRESSION
-             */
+        <!-- ARITHMETIC GRAMMAR -->
 
-            parseStatement() {
+        <div class="card">
 
-                this.addTrace(
-                    "STATEMENT → ID = EXPRESSION"
-                );
+            <h3>Grammar</h3>
 
-                this.consume("ID");
+            <pre>
+expression:
+      expression '+' expression
+    | expression '-' expression
+    | expression '*' expression
+    | expression '/' expression
+    | '(' expression ')'
+    | '-' expression %prec UMINUS
+    | NUMBER
+    ;
+            </pre>
 
-                this.consume("ASSIGN");
+        </div>
 
-                this.parseExpression();
-            }
 
+        <!-- PRECEDENCE -->
 
-            /*
-             * EXPRESSION
-             *
-             * EXPRESSION
-             *     → TERM ((+ | -) TERM)*
-             */
+        <div class="card">
 
-            parseExpression() {
+            <h3>Operator Precedence</h3>
 
-                this.addTrace(
-                    "EXPRESSION → TERM ((+ | -) TERM)*"
-                );
+            <pre>
+%left '+' '-'
+%left '*' '/'
+%right UMINUS
+            </pre>
 
-                this.parseTerm();
+        </div>
 
-                while (
-                    this.current().type === "PLUS" ||
-                    this.current().type === "MINUS"
-                ) {
 
-                    this.position++;
+        <!-- ARITHMETIC EXAMPLES -->
 
-                    this.parseTerm();
-                }
-            }
+        <div class="card examples">
 
+            <h3>Examples</h3>
 
-            /*
-             * TERM
-             *
-             * TERM
-             *     → FACTOR ((* | /) FACTOR)*
-             */
+            <h4>Valid</h4>
 
-            parseTerm() {
+            <ul>
 
-                this.addTrace(
-                    "TERM → FACTOR ((* | /) FACTOR)*"
-                );
+                <li>
+                    <code>10 + 5</code>
+                </li>
 
-                this.parseFactor();
+                <li>
+                    <code>10 + 5 * 2</code>
+                </li>
 
-                while (
-                    this.current().type === "MULTIPLY" ||
-                    this.current().type === "DIVIDE"
-                ) {
+                <li>
+                    <code>(10 + 5) * 2</code>
+                </li>
 
-                    this.position++;
+                <li>
+                    <code>-10 + 5</code>
+                </li>
 
-                    this.parseFactor();
-                }
-            }
+                <li>
+                    <code>10 / 2 - 3</code>
+                </li>
 
+            </ul>
 
-            /*
-             * FACTOR
-             *
-             * FACTOR
-             *     → ID | NUMBER | ( EXPRESSION )
-             */
 
-            parseFactor() {
+            <h4>Invalid</h4>
 
-                this.addTrace(
-                    "FACTOR → ID | NUMBER | ( EXPRESSION )"
-                );
+            <ul>
 
-                if (
-                    this.current().type === "ID" ||
-                    this.current().type === "NUMBER"
-                ) {
+                <li>
+                    <code>10 +</code>
+                </li>
 
-                    this.position++;
-                    return;
-                }
+                <li>
+                    <code>* 10</code>
+                </li>
 
-                if (this.current().type === "LPAREN") {
+                <li>
+                    <code>(10 + 5</code>
+                </li>
 
-                    this.consume("LPAREN");
+                <li>
+                    <code>10 / / 2</code>
+                </li>
 
-                    this.parseExpression();
+                <li>
+                    <code>10 + abc</code>
+                </li>
 
-                    this.consume("RPAREN");
+            </ul>
 
-                    return;
-                }
+        </div>
 
-                throw new Error(
-                    `Expected identifier, number, or expression, found '${this.current().value}'`
-                );
-            }
-        }
+    </section>
 
+</div>
 
-        /*
-         * ==========================================
-         * UI
-         * ==========================================
-         */
 
-        function parseInput() {
-
-            const input =
-                document.getElementById("whileInput").value.trim();
-
-            const result =
-                document.getElementById("result");
-
-            const tokenOutput =
-                document.getElementById("tokens");
-
-            const traceOutput =
-                document.getElementById("trace");
-
-
-            if (!input) {
-
-                result.textContent = "Please enter a while-loop.";
-                result.className = "result invalid";
-
-                return;
-            }
-
-
-            try {
-
-                /*
-                 * LEXICAL ANALYSIS
-                 */
-
-                const lexer = new Lexer(input);
-
-                const tokens = lexer.tokenize();
-
-
-                tokenOutput.textContent =
-                    tokens
-                        .filter(token => token.type !== "EOF")
-                        .map(
-                            token =>
-                                `[${token.type}: ${token.value}]`
-                        )
-                        .join("\n");
-
-
-                /*
-                 * SYNTAX ANALYSIS
-                 */
-
-                const parser = new Parser(tokens);
-
-                parser.parseWhileLoop();
-
-
-                /*
-                 * SUCCESS
-                 */
-
-                result.textContent =
-                    "✓ Valid while-loop — parsing successful";
-
-                result.className = "result valid";
-
-
-                traceOutput.textContent =
-                    parser.trace
-                        .map(
-                            (rule, index) =>
-                                `${index + 1}. ${rule}`
-                        )
-                        .join("\n");
-
-            }
-
-            catch (error) {
-
-                result.textContent =
-                    "✗ Invalid while-loop: " + error.message;
-
-                result.className = "result invalid";
-
-                traceOutput.textContent =
-                    "Parsing stopped.\n\n" +
-                    error.message;
-            }
-        }
-
-    </script>
+<script src="script.js"></script>
 
 </body>
+
 </html>
 ```
