@@ -9,7 +9,7 @@ void yyerror(const char *s);
 %}
 
 %token WHILE ID NUMBER
-%token LT ASSIGN PLUS SEMICOLON
+%token LT GT ASSIGN PLUS SEMICOLON
 
 %%
 
@@ -20,6 +20,7 @@ stmt:
 
 expr:
       ID LT NUMBER
+    | ID GT NUMBER
     | ID PLUS NUMBER
     ;
 
@@ -57,7 +58,10 @@ int yylex(void)
     }
 
     if (isdigit(c)) {
+        yylval = 0;
+
         do {
+            yylval = yylval * 10 + (c - '0');
             c = getchar();
         } while (isdigit(c));
 
@@ -69,6 +73,9 @@ int yylex(void)
 
     if (c == '<')
         return LT;
+
+    if (c == '>')
+        return GT;
 
     if (c == '=')
         return ASSIGN;
