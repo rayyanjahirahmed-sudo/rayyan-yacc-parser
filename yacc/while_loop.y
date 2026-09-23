@@ -9,30 +9,20 @@ void yyerror(const char *s);
 %}
 
 %token WHILE ID NUMBER
-%token LT GT ASSIGN PLUS MINUS MULT DIV SEMICOLON
-
-%left PLUS MINUS
-%left MULT DIV
+%token LT GT ASSIGN PLUS MINUS SEMICOLON
 
 %%
 
 stmt:
-      WHILE '(' condition ')' stmt
+      WHILE '(' expr ')' stmt
     | ID ASSIGN expr SEMICOLON
     ;
 
-condition:
+expr:
       ID LT NUMBER
     | ID GT NUMBER
-    ;
-
-expr:
-      expr PLUS expr
-    | expr MINUS expr
-    | expr MULT expr
-    | expr DIV expr
-    | ID
-    | NUMBER
+    | ID PLUS NUMBER
+    | ID MINUS NUMBER
     ;
 
 %%
@@ -96,12 +86,6 @@ int yylex(void)
 
     if (c == '-')
         return MINUS;
-
-    if (c == '*')
-        return MULT;
-
-    if (c == '/')
-        return DIV;
 
     if (c == ';')
         return SEMICOLON;
