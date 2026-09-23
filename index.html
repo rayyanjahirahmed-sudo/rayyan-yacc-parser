@@ -1,59 +1,562 @@
+```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>YACC While-Loop Parser</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <h1>YACC Parser</h1>
+    <div class="container">
 
-    <p>
-        This website demonstrates a simple YACC parser for while-loop syntax.
-    </p>
+        <h1>YACC Parser</h1>
 
-    <h2>While-Loop Parser</h2>
+        <p class="subtitle">
+            Browser-based YACC-style parser for while-loop syntax
+        </p>
 
-    <textarea id="whileInput">while (x < 10) x = x;</textarea>
+        <div class="parser-box">
 
-    <br><br>
+            <h2>While-Loop Parser</h2>
 
-    <button onclick="checkWhile()">Parse While-Loop</button>
+            <textarea id="whileInput">while (x < 10) x = x + 1;</textarea>
 
-    <p id="whileResult">Enter a while-loop above.</p>
+            <button onclick="parseInput()">Parse While-Loop</button>
 
-    <h3>Valid Examples</h3>
+            <div id="result" class="result">
+                Enter a while-loop and click Parse.
+            </div>
 
-    <ul>
-        <li>while (x &lt; 10) x = x;</li>
-        <li>while (x &lt; 10) x = x + 1;</li>
-        <li>while (x &gt; 10) x = x - 1;</li>
-        <li>while (x &lt; 10) x = x * 2;</li>
-        <li>while (x &gt; 10) x = x / 2;</li>
-    </ul>
+        </div>
 
-    <h3>Invalid Examples</h3>
+        <div class="output-grid">
 
-    <ul>
-        <li>while (x = 10) x = x + 1;</li>
-        <li>while (x &lt; 10) x = x % 2;</li>
-    </ul>
+            <div class="panel">
+                <h3>Tokens</h3>
+                <pre id="tokens">No tokens generated.</pre>
+            </div>
+
+            <div class="panel">
+                <h3>Parser Trace</h3>
+                <pre id="trace">No parsing performed.</pre>
+            </div>
+
+        </div>
+
+        <div class="examples">
+
+            <h3>Valid Examples</h3>
+
+            <ul>
+                <li>while (x &lt; 10) x = x;</li>
+                <li>while (x &lt; 10) x = x + 1;</li>
+                <li>while (x &gt; 10) x = x - 1;</li>
+                <li>while (x &lt;= 10) x = x * 2;</li>
+                <li>while (x &gt;= 10) x = x / 2;</li>
+                <li>while (x != 10) x = x + 1;</li>
+            </ul>
+
+            <h3>Invalid Examples</h3>
+
+            <ul>
+                <li>while (x = 10) x = x + 1;</li>
+                <li>while (x &lt; 10) x = x % 2;</li>
+                <li>while x &lt; 10 x = x + 1;</li>
+                <li>while (x &lt; 10) x + 1;</li>
+                <li>while (x &lt; 10) x = ;</li>
+            </ul>
+
+        </div>
+
+        <div class="grammar">
+
+            <h3>Grammar</h3>
+
+            <pre>
+WHILE_LOOP → while ( CONDITION ) STATEMENT ;
+
+CONDITION  → EXPRESSION REL_OP EXPRESSION
+
+STATEMENT  → ID = EXPRESSION
+
+EXPRESSION → TERM ((+ | -) TERM)*
+
+TERM       → FACTOR ((* | /) FACTOR)*
+
+FACTOR     → ID | NUMBER | ( EXPRESSION )
+
+REL_OP     → &lt; | &gt; | &lt;= | &gt;= | == | !=
+            </pre>
+
+        </div>
+
+    </div>
 
     <script>
-        function checkWhile() {
-            let input = document.getElementById("whileInput").value.trim();
-            let result = document.getElementById("whileResult");
 
-            let pattern = /^while\s*\(\s*.+\s*(<|>)\s*.+\s*\)\s*[a-zA-Z]+\s*=\s*.+\s*;$/;
+        /*
+         * ==========================================
+         * LEXER
+         * ==========================================
+         */
 
-            if (pattern.test(input) && !input.includes("%")) {
-                result.textContent = "Valid while-loop";
-            } else {
-                result.textContent = "Invalid while-loop";
+        class Lexer {
+
+            constructor(input) {
+                this.input = input;
+                this.position = 0;
+                this.tokens = [];
+            }
+
+            tokenize() {
+
+                while (this.position < this.input.length) {
+
+                    let current = this.input[this.position];
+
+                    // Ignore whitespace
+                    if (/\s/.test(current)) {
+                        this.position++;
+                        continue;
+                    }
+
+                    // Identifier / keyword
+                    if (/[a-zA-Z_]/.test(current)) {
+
+                        let start = this.position;
+
+                        while (
+                            this.position < this.input.length &&
+                            /[a-zA-Z0-9_]/.test(this.input[this.position])
+                        ) {
+                            this.position++;
+                        }
+
+                        let word = this.input.substring(
+                            start,
+                            this.position
+                        );
+
+                        if (word === "while") {
+                            this.tokens.push({
+                                type: "WHILE",
+                                value: word
+                            });
+                        } else {
+                            this.tokens.push({
+                                type: "ID",
+                                value: word
+                            });
+                        }
+
+                        continue;
+                    }
+
+                    // Number
+                    if (/[0-9]/.test(current)) {
+
+                        let start = this.position;
+
+                        while (
+                            this.position < this.input.length &&
+                            /[0-9]/.test(this.input[this.position])
+                        ) {
+                            this.position++;
+                        }
+
+                        this.tokens.push({
+                            type: "NUMBER",
+                            value: this.input.substring(
+                                start,
+                                this.position
+                            )
+                        });
+
+                        continue;
+                    }
+
+                    // Two-character operators
+                    let twoChar =
+                        this.input.substring(
+                            this.position,
+                            this.position + 2
+                        );
+
+                    if (
+                        twoChar === "<=" ||
+                        twoChar === ">=" ||
+                        twoChar === "==" ||
+                        twoChar === "!="
+                    ) {
+
+                        this.tokens.push({
+                            type: "REL_OP",
+                            value: twoChar
+                        });
+
+                        this.position += 2;
+                        continue;
+                    }
+
+                    // Single-character operators
+                    let operators = {
+                        "<": "REL_OP",
+                        ">": "REL_OP",
+                        "=": "ASSIGN",
+                        "+": "PLUS",
+                        "-": "MINUS",
+                        "*": "MULTIPLY",
+                        "/": "DIVIDE",
+                        "(": "LPAREN",
+                        ")": "RPAREN",
+                        ";": "SEMICOLON"
+                    };
+
+                    if (operators[current]) {
+
+                        this.tokens.push({
+                            type: operators[current],
+                            value: current
+                        });
+
+                        this.position++;
+                        continue;
+                    }
+
+                    throw new Error(
+                        `Unknown character '${current}' at position ${this.position}`
+                    );
+                }
+
+                this.tokens.push({
+                    type: "EOF",
+                    value: "EOF"
+                });
+
+                return this.tokens;
             }
         }
+
+
+        /*
+         * ==========================================
+         * YACC-STYLE PARSER
+         * ==========================================
+         */
+
+        class Parser {
+
+            constructor(tokens) {
+
+                this.tokens = tokens;
+                this.position = 0;
+                this.trace = [];
+            }
+
+            current() {
+                return this.tokens[this.position];
+            }
+
+            consume(type) {
+
+                if (this.current().type === type) {
+
+                    let token = this.current();
+
+                    this.position++;
+
+                    return token;
+
+                } else {
+
+                    throw new Error(
+                        `Expected ${type}, found '${this.current().value}'`
+                    );
+                }
+            }
+
+            addTrace(rule) {
+                this.trace.push(rule);
+            }
+
+
+            /*
+             * WHILE_LOOP
+             *
+             * WHILE_LOOP
+             *     → WHILE ( CONDITION ) STATEMENT ;
+             */
+
+            parseWhileLoop() {
+
+                this.addTrace(
+                    "WHILE_LOOP → while ( CONDITION ) STATEMENT ;"
+                );
+
+                this.consume("WHILE");
+
+                this.consume("LPAREN");
+
+                this.parseCondition();
+
+                this.consume("RPAREN");
+
+                this.parseStatement();
+
+                this.consume("SEMICOLON");
+
+                if (this.current().type !== "EOF") {
+
+                    throw new Error(
+                        `Unexpected token '${this.current().value}'`
+                    );
+                }
+            }
+
+
+            /*
+             * CONDITION
+             *
+             * CONDITION
+             *     → EXPRESSION REL_OP EXPRESSION
+             */
+
+            parseCondition() {
+
+                this.addTrace(
+                    "CONDITION → EXPRESSION REL_OP EXPRESSION"
+                );
+
+                this.parseExpression();
+
+                if (this.current().type !== "REL_OP") {
+
+                    throw new Error(
+                        `Expected relational operator, found '${this.current().value}'`
+                    );
+                }
+
+                this.consume("REL_OP");
+
+                this.parseExpression();
+            }
+
+
+            /*
+             * STATEMENT
+             *
+             * STATEMENT
+             *     → ID = EXPRESSION
+             */
+
+            parseStatement() {
+
+                this.addTrace(
+                    "STATEMENT → ID = EXPRESSION"
+                );
+
+                this.consume("ID");
+
+                this.consume("ASSIGN");
+
+                this.parseExpression();
+            }
+
+
+            /*
+             * EXPRESSION
+             *
+             * EXPRESSION
+             *     → TERM ((+ | -) TERM)*
+             */
+
+            parseExpression() {
+
+                this.addTrace(
+                    "EXPRESSION → TERM ((+ | -) TERM)*"
+                );
+
+                this.parseTerm();
+
+                while (
+                    this.current().type === "PLUS" ||
+                    this.current().type === "MINUS"
+                ) {
+
+                    this.position++;
+
+                    this.parseTerm();
+                }
+            }
+
+
+            /*
+             * TERM
+             *
+             * TERM
+             *     → FACTOR ((* | /) FACTOR)*
+             */
+
+            parseTerm() {
+
+                this.addTrace(
+                    "TERM → FACTOR ((* | /) FACTOR)*"
+                );
+
+                this.parseFactor();
+
+                while (
+                    this.current().type === "MULTIPLY" ||
+                    this.current().type === "DIVIDE"
+                ) {
+
+                    this.position++;
+
+                    this.parseFactor();
+                }
+            }
+
+
+            /*
+             * FACTOR
+             *
+             * FACTOR
+             *     → ID | NUMBER | ( EXPRESSION )
+             */
+
+            parseFactor() {
+
+                this.addTrace(
+                    "FACTOR → ID | NUMBER | ( EXPRESSION )"
+                );
+
+                if (
+                    this.current().type === "ID" ||
+                    this.current().type === "NUMBER"
+                ) {
+
+                    this.position++;
+                    return;
+                }
+
+                if (this.current().type === "LPAREN") {
+
+                    this.consume("LPAREN");
+
+                    this.parseExpression();
+
+                    this.consume("RPAREN");
+
+                    return;
+                }
+
+                throw new Error(
+                    `Expected identifier, number, or expression, found '${this.current().value}'`
+                );
+            }
+        }
+
+
+        /*
+         * ==========================================
+         * UI
+         * ==========================================
+         */
+
+        function parseInput() {
+
+            const input =
+                document.getElementById("whileInput").value.trim();
+
+            const result =
+                document.getElementById("result");
+
+            const tokenOutput =
+                document.getElementById("tokens");
+
+            const traceOutput =
+                document.getElementById("trace");
+
+
+            if (!input) {
+
+                result.textContent = "Please enter a while-loop.";
+                result.className = "result invalid";
+
+                return;
+            }
+
+
+            try {
+
+                /*
+                 * LEXICAL ANALYSIS
+                 */
+
+                const lexer = new Lexer(input);
+
+                const tokens = lexer.tokenize();
+
+
+                tokenOutput.textContent =
+                    tokens
+                        .filter(token => token.type !== "EOF")
+                        .map(
+                            token =>
+                                `[${token.type}: ${token.value}]`
+                        )
+                        .join("\n");
+
+
+                /*
+                 * SYNTAX ANALYSIS
+                 */
+
+                const parser = new Parser(tokens);
+
+                parser.parseWhileLoop();
+
+
+                /*
+                 * SUCCESS
+                 */
+
+                result.textContent =
+                    "✓ Valid while-loop — parsing successful";
+
+                result.className = "result valid";
+
+
+                traceOutput.textContent =
+                    parser.trace
+                        .map(
+                            (rule, index) =>
+                                `${index + 1}. ${rule}`
+                        )
+                        .join("\n");
+
+            }
+
+            catch (error) {
+
+                result.textContent =
+                    "✗ Invalid while-loop: " + error.message;
+
+                result.className = "result invalid";
+
+                traceOutput.textContent =
+                    "Parsing stopped.\n\n" +
+                    error.message;
+            }
+        }
+
     </script>
 
 </body>
 </html>
+```
