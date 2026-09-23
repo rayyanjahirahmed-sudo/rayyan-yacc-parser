@@ -1,97 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>YACC (Parsing)</title>
+    <title>YACC While-Loop Parser</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <h1>YACC (Parsing)</h1>
+    <h1>YACC Parser</h1>
 
     <p>
-        YACC is a parser generator used to check whether an input
-        follows a defined grammar.
+        This website demonstrates a simple YACC parser for
+        while-loop syntax and arithmetic expressions.
     </p>
 
-    <hr>
+    <h2>While-Loop Parser</h2>
 
-    <h2>1. Arithmetic Expression Parser</h2>
+    <textarea id="whileInput">while (x < 10) x = x + 1;</textarea>
 
-    <p>
-        <b>Grammar:</b> Handles +, -, *, /, parentheses and operator precedence.
-    </p>
+    <br><br>
 
-    <p>
-        <b>Demo:</b> (10 + 20) * 5
-    </p>
-
-    <input
-        type="text"
-        id="expression"
-        placeholder="Example: (10 + 20) * 5"
-    >
-
-    <button onclick="parseExpression()">Parse Expression</button>
-
-    <p id="expressionResult">Enter an expression above.</p>
-
-    <hr>
-
-    <h2>2. Simple While-Loop Parser</h2>
-
-    <p>
-        <b>Grammar:</b> stmt → while (expr) stmt
-    </p>
-
-    <p>
-        <b>Demo:</b> while (x &lt; 10) x = x + 1;
-    </p>
-
-    <input
-        type="text"
-        id="whileInput"
-        placeholder="Example: while (x < 10) x = x + 1;"
-    >
-
-    <button onclick="parseWhile()">Parse While-Loop</button>
+    <button onclick="checkWhile()">Parse While-Loop</button>
 
     <p id="whileResult">Enter a while-loop above.</p>
 
+    <h3>Examples</h3>
+
+    <p>Valid:</p>
+    <ul>
+        <li>while (x &lt; 10) x = x + 1;</li>
+        <li>while (x &gt; 10) x = x - 1;</li>
+        <li>while (x &lt; 10) x = x * 2;</li>
+        <li>while (x &gt; 10) x = x / 2;</li>
+        <li>while (x &lt; 10) x = x;</li>
+    </ul>
+
+    <p>Invalid:</p>
+    <ul>
+        <li>while (x = 10) x = x + 1;</li>
+        <li>while (x &lt; 10) x = x % 2;</li>
+    </ul>
+
     <script>
-
-        function parseExpression() {
-
-            let input = document.getElementById("expression").value.trim();
-
-            let pattern =
-                /^(?:\d+|\([0-9+\-*/()\s]+\)|[0-9+\-*/()\s]+)$/;
-
-            if (input && pattern.test(input)) {
-                document.getElementById("expressionResult").textContent =
-                    "Valid arithmetic expression";
-            } else {
-                document.getElementById("expressionResult").textContent =
-                    "Invalid arithmetic expression";
-            }
-        }
-
-        function parseWhile() {
-
+        function checkWhile() {
             let input = document.getElementById("whileInput").value.trim();
+            let result = document.getElementById("whileResult");
 
             let pattern =
-                /^while\s*\(\s*[a-zA-Z][a-zA-Z0-9]*\s*<\s*[0-9]+\s*\)\s*[a-zA-Z][a-zA-Z0-9]*\s*=\s*[a-zA-Z][a-zA-Z0-9]*\s*\+\s*[0-9]+\s*;$/;
+                /^while\s*\(\s*[a-zA-Z0-9]+(\s*[+\-*/]\s*[a-zA-Z0-9]+)*\s*(<|>)\s*[a-zA-Z0-9]+(\s*[+\-*/]\s*[a-zA-Z0-9]+)*\s*\)\s*[a-zA-Z]+\s*=\s*[a-zA-Z0-9]+(\s*[+\-*/]\s*[a-zA-Z0-9]+)*\s*;$/;
 
             if (pattern.test(input)) {
-                document.getElementById("whileResult").textContent =
-                    "Valid while-loop";
+                result.textContent = "Valid while-loop";
             } else {
-                document.getElementById("whileResult").textContent =
-                    "Invalid while-loop";
+                result.textContent = "Invalid while-loop";
             }
         }
-
     </script>
 
 </body>
