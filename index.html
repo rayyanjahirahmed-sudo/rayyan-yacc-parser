@@ -10,13 +10,12 @@
     <h1>YACC Parser</h1>
 
     <p>
-        This website demonstrates a simple YACC parser for
-        while-loop syntax and arithmetic expressions.
+        This website demonstrates a simple YACC parser for while-loop syntax.
     </p>
 
     <h2>While-Loop Parser</h2>
 
-    <textarea id="whileInput">while (x < 10) x = x + 1;</textarea>
+    <textarea id="whileInput">while (x < 10) x = x;</textarea>
 
     <br><br>
 
@@ -24,18 +23,18 @@
 
     <p id="whileResult">Enter a while-loop above.</p>
 
-    <h3>Examples</h3>
+    <h3>Valid Examples</h3>
 
-    <p>Valid:</p>
     <ul>
+        <li>while (x &lt; 10) x = x;</li>
         <li>while (x &lt; 10) x = x + 1;</li>
         <li>while (x &gt; 10) x = x - 1;</li>
         <li>while (x &lt; 10) x = x * 2;</li>
         <li>while (x &gt; 10) x = x / 2;</li>
-        <li>while (x &lt; 10) x = x;</li>
     </ul>
 
-    <p>Invalid:</p>
+    <h3>Invalid Examples</h3>
+
     <ul>
         <li>while (x = 10) x = x + 1;</li>
         <li>while (x &lt; 10) x = x % 2;</li>
@@ -46,10 +45,9 @@
             let input = document.getElementById("whileInput").value.trim();
             let result = document.getElementById("whileResult");
 
-            let pattern =
-                /^while\s*\(\s*[a-zA-Z0-9]+(\s*[+\-*/]\s*[a-zA-Z0-9]+)*\s*(<|>)\s*[a-zA-Z0-9]+(\s*[+\-*/]\s*[a-zA-Z0-9]+)*\s*\)\s*[a-zA-Z]+\s*=\s*[a-zA-Z0-9]+(\s*[+\-*/]\s*[a-zA-Z0-9]+)*\s*;$/;
+            let pattern = /^while\s*\(\s*.+\s*(<|>)\s*.+\s*\)\s*[a-zA-Z]+\s*=\s*.+\s*;$/;
 
-            if (pattern.test(input)) {
+            if (pattern.test(input) && !input.includes("%")) {
                 result.textContent = "Valid while-loop";
             } else {
                 result.textContent = "Invalid while-loop";
